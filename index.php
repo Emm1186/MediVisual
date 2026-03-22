@@ -20,31 +20,28 @@ unset($_SESSION['form_errors'], $_SESSION['form_success']);
 <title>MediVisual</title>
 <style>
 :root{
-  --bg1:#3f4f2f;
-  --bg2:#556b2f;
-  --card:#1e2416;
-  --card2:#2c3a1f;
-  --text:#f1f5ec;
-  --muted:#a7b39b;
-  --line:rgba(255,255,255,.08);
-  --accent:#8fbc8f;
-  --shadow:0 20px 80px rgba(0,0,0,.45);
+  --bg1:#f4f7f2;
+  --bg2:#e9efe4;
+  --card:#ffffff;
+  --card2:#f8faf6;
+  --text:#2f3a2f;
+  --muted:#6b7c6b;
+  --line:#e2e8dc;
+  --accent:#7aa874;
+  --shadow:0 10px 30px rgba(0,0,0,.08);
   --radius:18px;
 }
 *{box-sizing:border-box}
 body{
   margin:0;
   min-height:100vh;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   color:var(--text);
-  background:
-    radial-gradient(1200px 700px at 15% 15%, rgba(85,107,47,.35), transparent 60%),
-    radial-gradient(900px 600px at 85% 20%, rgba(63,79,47,.45), transparent 55%),
-    linear-gradient(180deg, #1a2113, #10150c);
+  background:linear-gradient(180deg, #f4f7f2, #e9efe4);
   padding:24px;
 }
 .container{
-  width:min(1200px, 100%);
+  width:min(1300px, 100%);
   margin:auto;
 }
 .topbar{
@@ -53,6 +50,7 @@ body{
   align-items:center;
   gap:16px;
   margin-bottom:24px;
+  flex-wrap:wrap;
 }
 .brand h1{
   margin:0;
@@ -67,29 +65,22 @@ body{
   gap:12px;
   flex-wrap:wrap;
 }
-.btn, .btn-link{
+.btn-link{
   display:inline-block;
   padding:12px 16px;
   border-radius:12px;
   text-decoration:none;
   font-weight:600;
-}
-.btn{
-  background:linear-gradient(135deg,#6b8e23,#556b2f);
-  color:#fff;
-  border:1px solid rgba(255,255,255,.08);
-}
-.btn-link{
-  background:rgba(255,255,255,.05);
+  background:#ffffff;
   color:var(--text);
   border:1px solid var(--line);
 }
 .grid{
   display:grid;
-  grid-template-columns:1.2fr .9fr;
+  grid-template-columns:1.35fr .95fr;
   gap:24px;
 }
-@media(max-width:950px){
+@media(max-width:1000px){
   .grid{grid-template-columns:1fr}
 }
 .card{
@@ -107,31 +98,73 @@ body{
   border-radius:12px;
   margin-bottom:12px;
 }
-.alert.error{background:rgba(201,123,99,.25)}
-.alert.success{background:rgba(107,142,35,.25)}
-.map-wrap{
+.alert.error{
+  background:#fbe4df;
+  color:#8b4a3a;
+}
+.alert.success{
+  background:#e3f0df;
+  color:#476241;
+}
+.toolbar{
   display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:12px;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.toggle-btn{
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:#ffffff;
+  color:var(--text);
+  cursor:pointer;
+  font-weight:600;
+}
+.toggle-btn.active{
+  background:linear-gradient(135deg,#7aa874,#5f8f63);
+  color:white;
+}
+.map-stage{
+  display:grid;
+  grid-template-columns:1fr;
+  justify-items:center;
+}
+.figure-box{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:16px;
+  background:#fcfdfb;
+}
+.figure-title{
+  margin:0 0 10px;
+  color:var(--muted);
+  font-size:.95rem;
+  text-align:center;
 }
 svg{
   width:100%;
-  max-width:350px;
+  max-width:520px;
   height:auto;
+  display:block;
+  margin:auto;
 }
 .body-part{
-  fill:#d9e4cf;
-  stroke:#3b4a2b;
+  fill:#cddbc8;
+  stroke:#5f8f63;
   stroke-width:2;
   cursor:pointer;
   transition:.2s ease;
 }
 .body-part:hover{
-  fill:#8fbc8f;
+  fill:#9fc79a;
 }
 .body-part.active{
-  fill:#6b8e23;
+  fill:#7aa874;
+}
+.hidden{
+  display:none;
 }
 .form-group{
   margin-bottom:14px;
@@ -146,7 +179,7 @@ input, textarea, select{
   padding:12px;
   border-radius:12px;
   border:1px solid var(--line);
-  background:rgba(255,255,255,.05);
+  background:#ffffff;
   color:var(--text);
 }
 textarea{
@@ -159,21 +192,66 @@ textarea{
 }
 .region-name{
   font-weight:700;
-  color:#cfe8b7;
+  color:#5f8f63;
+  font-size:1rem;
+}
+.selected-box{
+  margin:14px 0;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#f8fbf6;
 }
 .submit-btn{
   width:100%;
   padding:14px;
   border:none;
   border-radius:12px;
-  background:linear-gradient(135deg,#6b8e23,#556b2f);
+  background:linear-gradient(135deg,#7aa874,#5f8f63);
   color:white;
   font-size:1rem;
   font-weight:700;
   cursor:pointer;
 }
 .submit-btn:hover{
-  filter:brightness(1.08);
+  filter:brightness(1.05);
+}
+.legend{
+  margin-top:12px;
+  color:var(--muted);
+  font-size:.92rem;
+}
+.dynamic-box{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#f8fbf6;
+}
+.dynamic-box h3{
+  margin:0 0 10px;
+  font-size:1rem;
+}
+.option-list{
+  display:grid;
+  gap:10px;
+}
+.option-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px;
+}
+.option-item input[type="checkbox"]{
+  width:auto;
+  margin:0;
+}
+.no-region{
+  color:var(--muted);
+  font-size:.92rem;
 }
 </style>
 </head>
@@ -183,7 +261,7 @@ textarea{
   <div class="topbar">
     <div class="brand">
       <h1>MediVisual</h1>
-      <p>Bienvenido, <?= htmlspecialchars($name) ?> </p>
+      <p>Bienvenido, <?= htmlspecialchars($name) ?> 👋</p>
     </div>
 
     <div class="actions">
@@ -194,34 +272,74 @@ textarea{
 
   <div class="grid">
     <div class="card">
-      <h2>Selecciona dónde sientes la molestia</h2>
-      <p class="small">Haz clic sobre una zona del cuerpo para registrarla.</p>
+      <h2>Selecciona la zona de la molestia</h2>
+      <p class="small">Primero elige una vista corporal y después haz clic sobre la zona afectada.</p>
 
-      <div class="map-wrap">
-        <svg viewBox="0 0 220 500" xmlns="http://www.w3.org/2000/svg">
-          <!-- Cabeza -->
-          <circle class="body-part" id="head" cx="110" cy="45" r="30"/>
-          <!-- Pecho -->
-          <rect class="body-part" id="chest" x="75" y="90" width="70" height="65" rx="20"/>
-          <!-- Abdomen -->
-          <rect class="body-part" id="abdomen" x="78" y="160" width="64" height="70" rx="18"/>
-          <!-- Brazo izq -->
-          <rect class="body-part" id="left_arm" x="35" y="95" width="28" height="120" rx="14"/>
-          <!-- Brazo der -->
-          <rect class="body-part" id="right_arm" x="157" y="95" width="28" height="120" rx="14"/>
-          <!-- Pierna izq -->
-          <rect class="body-part" id="left_leg" x="82" y="240" width="24" height="170" rx="12"/>
-          <!-- Pierna der -->
-          <rect class="body-part" id="right_leg" x="114" y="240" width="24" height="170" rx="12"/>
-          <!-- Espalda (botón aparte visual) -->
-          <rect class="body-part" id="back" x="70" y="420" width="80" height="40" rx="12"/>
-          <text x="110" y="445" text-anchor="middle" font-size="14" fill="#223018">ESPALDA</text>
-        </svg>
+      <div class="toolbar">
+        <button type="button" class="toggle-btn active" id="frontBtn">Vista frontal</button>
+        <button type="button" class="toggle-btn" id="backBtn">Vista posterior</button>
+      </div>
 
-        <p class="small">
-          Región seleccionada:
-          <span class="region-name" id="selected-region-label">Ninguna</span>
-        </p>
+      <div class="map-stage">
+        <div class="figure-box" id="frontView">
+          <p class="figure-title">Mapa corporal frontal</p>
+          <svg viewBox="0 0 600 900" xmlns="http://www.w3.org/2000/svg">
+            <ellipse class="body-part" id="head_front" data-view="front" data-side="center" cx="300" cy="85" rx="55" ry="62"/>
+            <rect class="body-part" id="shoulder_left_front" data-view="front" data-side="left" x="190" y="150" width="70" height="50" rx="20"/>
+            <rect class="body-part" id="shoulder_right_front" data-view="front" data-side="right" x="340" y="150" width="70" height="50" rx="20"/>
+            <rect class="body-part" id="chest_left" data-view="front" data-side="left" x="215" y="205" width="78" height="90" rx="24"/>
+            <rect class="body-part" id="chest_right" data-view="front" data-side="right" x="307" y="205" width="78" height="90" rx="24"/>
+            <rect class="body-part" id="abdomen_upper" data-view="front" data-side="center" x="245" y="305" width="110" height="75" rx="18"/>
+            <rect class="body-part" id="abdomen_lower" data-view="front" data-side="center" x="250" y="390" width="100" height="78" rx="18"/>
+            <rect class="body-part" id="arm_left_front" data-view="front" data-side="left" x="120" y="205" width="50" height="120" rx="22"/>
+            <rect class="body-part" id="arm_right_front" data-view="front" data-side="right" x="430" y="205" width="50" height="120" rx="22"/>
+            <rect class="body-part" id="forearm_left_front" data-view="front" data-side="left" x="90" y="330" width="42" height="145" rx="20"/>
+            <rect class="body-part" id="forearm_right_front" data-view="front" data-side="right" x="468" y="330" width="42" height="145" rx="20"/>
+            <rect class="body-part" id="hand_left_front" data-view="front" data-side="left" x="82" y="480" width="38" height="52" rx="16"/>
+            <rect class="body-part" id="hand_right_front" data-view="front" data-side="right" x="480" y="480" width="38" height="52" rx="16"/>
+            <rect class="body-part" id="thigh_left_front" data-view="front" data-side="left" x="235" y="480" width="58" height="150" rx="24"/>
+            <rect class="body-part" id="thigh_right_front" data-view="front" data-side="right" x="307" y="480" width="58" height="150" rx="24"/>
+            <rect class="body-part" id="knee_left_front" data-view="front" data-side="left" x="240" y="635" width="48" height="45" rx="18"/>
+            <rect class="body-part" id="knee_right_front" data-view="front" data-side="right" x="312" y="635" width="48" height="45" rx="18"/>
+            <rect class="body-part" id="leg_left_front" data-view="front" data-side="left" x="238" y="685" width="46" height="125" rx="18"/>
+            <rect class="body-part" id="leg_right_front" data-view="front" data-side="right" x="316" y="685" width="46" height="125" rx="18"/>
+            <rect class="body-part" id="foot_left_front" data-view="front" data-side="left" x="220" y="815" width="72" height="36" rx="16"/>
+            <rect class="body-part" id="foot_right_front" data-view="front" data-side="right" x="308" y="815" width="72" height="36" rx="16"/>
+          </svg>
+        </div>
+
+        <div class="figure-box hidden" id="backView">
+          <p class="figure-title">Mapa corporal posterior</p>
+          <svg viewBox="0 0 600 900" xmlns="http://www.w3.org/2000/svg">
+            <ellipse class="body-part" id="head_back" data-view="back" data-side="center" cx="300" cy="85" rx="55" ry="62"/>
+            <rect class="body-part" id="neck_back" data-view="back" data-side="center" x="270" y="145" width="60" height="42" rx="16"/>
+            <rect class="body-part" id="shoulder_left_back" data-view="back" data-side="left" x="190" y="185" width="70" height="50" rx="20"/>
+            <rect class="body-part" id="shoulder_right_back" data-view="back" data-side="right" x="340" y="185" width="70" height="50" rx="20"/>
+            <rect class="body-part" id="upper_back" data-view="back" data-side="center" x="220" y="240" width="160" height="80" rx="22"/>
+            <rect class="body-part" id="mid_back" data-view="back" data-side="center" x="235" y="326" width="130" height="90" rx="20"/>
+            <rect class="body-part" id="lower_back" data-view="back" data-side="center" x="245" y="422" width="110" height="65" rx="18"/>
+            <rect class="body-part" id="arm_left_back" data-view="back" data-side="left" x="120" y="235" width="50" height="120" rx="22"/>
+            <rect class="body-part" id="arm_right_back" data-view="back" data-side="right" x="430" y="235" width="50" height="120" rx="22"/>
+            <rect class="body-part" id="forearm_left_back" data-view="back" data-side="left" x="90" y="360" width="42" height="145" rx="20"/>
+            <rect class="body-part" id="forearm_right_back" data-view="back" data-side="right" x="468" y="360" width="42" height="145" rx="20"/>
+            <rect class="body-part" id="hand_left_back" data-view="back" data-side="left" x="82" y="510" width="38" height="52" rx="16"/>
+            <rect class="body-part" id="hand_right_back" data-view="back" data-side="right" x="480" y="510" width="38" height="52" rx="16"/>
+            <rect class="body-part" id="glute_left" data-view="back" data-side="left" x="240" y="495" width="55" height="70" rx="20"/>
+            <rect class="body-part" id="glute_right" data-view="back" data-side="right" x="305" y="495" width="55" height="70" rx="20"/>
+            <rect class="body-part" id="thigh_left_back" data-view="back" data-side="left" x="235" y="570" width="58" height="145" rx="24"/>
+            <rect class="body-part" id="thigh_right_back" data-view="back" data-side="right" x="307" y="570" width="58" height="145" rx="24"/>
+            <rect class="body-part" id="knee_left_back" data-view="back" data-side="left" x="240" y="720" width="48" height="45" rx="18"/>
+            <rect class="body-part" id="knee_right_back" data-view="back" data-side="right" x="312" y="720" width="48" height="45" rx="18"/>
+            <rect class="body-part" id="leg_left_back" data-view="back" data-side="left" x="238" y="770" width="46" height="90" rx="18"/>
+            <rect class="body-part" id="leg_right_back" data-view="back" data-side="right" x="316" y="770" width="46" height="90" rx="18"/>
+            <rect class="body-part" id="foot_left_back" data-view="back" data-side="left" x="220" y="860" width="72" height="28" rx="16"/>
+            <rect class="body-part" id="foot_right_back" data-view="back" data-side="right" x="308" y="860" width="72" height="28" rx="16"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="legend">
+        Consejo: selecciona la zona más cercana a tu molestia principal. Después podrás agregar más detalle en las notas.
       </div>
     </div>
 
@@ -240,14 +358,39 @@ textarea{
         </div>
       <?php endif; ?>
 
-      <form method="post" action="app/actions/create_session.php">
+      <form method="post" action="app/action/create_session.php" id="symptomForm">
+        <div class="form-group">
+          <label>Vista corporal</label>
+          <input type="text" id="body_view_display" value="No seleccionada" readonly>
+          <input type="hidden" name="body_view" id="body_view" required>
+        </div>
+
+        <div class="form-group">
+          <label>Lado del cuerpo</label>
+          <input type="text" id="body_side_display" value="No seleccionado" readonly>
+          <input type="hidden" name="body_side" id="body_side" required>
+        </div>
+
         <div class="form-group">
           <label>Zona corporal</label>
           <input type="text" id="region_display" value="Ninguna seleccionada" readonly>
           <input type="hidden" name="region_id" id="region_id" required>
         </div>
 
-        <div class="form-group">
+        <div class="selected-box">
+          <div class="small">Selección actual:</div>
+          <div class="region-name" id="selected-region-label">Ninguna</div>
+        </div>
+
+        <div class="dynamic-box">
+          <h3>Preguntas relacionadas</h3>
+          <div id="dynamicQuestions" class="no-region">
+            Selecciona una zona del cuerpo para mostrar preguntas específicas.
+          </div>
+          <input type="hidden" name="symptom_details" id="symptom_details">
+        </div>
+
+        <div class="form-group" style="margin-top:14px;">
           <label for="intensity">Intensidad del dolor (1 a 10)</label>
           <select name="intensity" id="intensity" required>
             <option value="">Selecciona</option>
@@ -259,7 +402,7 @@ textarea{
 
         <div class="form-group">
           <label for="notes">Notas adicionales</label>
-          <textarea name="notes" id="notes" maxlength="255" placeholder="Ej. me duele desde ayer, se siente punzante..."></textarea>
+          <textarea name="notes" id="notes" maxlength="255" placeholder="Ej. me duele al respirar, empezó ayer, se siente como presión, empeora al moverme..."></textarea>
         </div>
 
         <button type="submit" class="submit-btn">Guardar registro</button>
@@ -270,31 +413,217 @@ textarea{
 
 <script>
 const regionMap = {
-  head: 'Cabeza',
-  chest: 'Pecho',
-  abdomen: 'Abdomen',
-  left_arm: 'Brazo izquierdo',
-  right_arm: 'Brazo derecho',
-  left_leg: 'Pierna izquierda',
-  right_leg: 'Pierna derecha',
-  back: 'Espalda'
+  head_front: 'Cabeza (frontal)',
+  shoulder_left_front: 'Hombro izquierdo (frontal)',
+  shoulder_right_front: 'Hombro derecho (frontal)',
+  chest_left: 'Pecho izquierdo',
+  chest_right: 'Pecho derecho',
+  abdomen_upper: 'Abdomen superior',
+  abdomen_lower: 'Abdomen inferior',
+  arm_left_front: 'Brazo izquierdo (frontal)',
+  arm_right_front: 'Brazo derecho (frontal)',
+  forearm_left_front: 'Antebrazo izquierdo (frontal)',
+  forearm_right_front: 'Antebrazo derecho (frontal)',
+  hand_left_front: 'Mano izquierda (frontal)',
+  hand_right_front: 'Mano derecha (frontal)',
+  thigh_left_front: 'Muslo izquierdo (frontal)',
+  thigh_right_front: 'Muslo derecho (frontal)',
+  knee_left_front: 'Rodilla izquierda (frontal)',
+  knee_right_front: 'Rodilla derecha (frontal)',
+  leg_left_front: 'Pierna izquierda (frontal)',
+  leg_right_front: 'Pierna derecha (frontal)',
+  foot_left_front: 'Pie izquierdo (frontal)',
+  foot_right_front: 'Pie derecho (frontal)',
+  head_back: 'Cabeza (posterior)',
+  neck_back: 'Cuello (posterior)',
+  shoulder_left_back: 'Hombro izquierdo (posterior)',
+  shoulder_right_back: 'Hombro derecho (posterior)',
+  upper_back: 'Espalda alta',
+  mid_back: 'Espalda media',
+  lower_back: 'Espalda baja',
+  arm_left_back: 'Brazo izquierdo (posterior)',
+  arm_right_back: 'Brazo derecho (posterior)',
+  forearm_left_back: 'Antebrazo izquierdo (posterior)',
+  forearm_right_back: 'Antebrazo derecho (posterior)',
+  hand_left_back: 'Mano izquierda (posterior)',
+  hand_right_back: 'Mano derecha (posterior)',
+  glute_left: 'Glúteo izquierdo',
+  glute_right: 'Glúteo derecho',
+  thigh_left_back: 'Muslo izquierdo (posterior)',
+  thigh_right_back: 'Muslo derecho (posterior)',
+  knee_left_back: 'Rodilla izquierda (posterior)',
+  knee_right_back: 'Rodilla derecha (posterior)',
+  leg_left_back: 'Pierna izquierda (posterior)',
+  leg_right_back: 'Pierna derecha (posterior)',
+  foot_left_back: 'Pie izquierdo (posterior)',
+  foot_right_back: 'Pie derecho (posterior)'
 };
+
+const viewMap = {
+  front: 'Frontal',
+  back: 'Posterior'
+};
+
+const sideMap = {
+  left: 'Izquierdo',
+  right: 'Derecho',
+  center: 'Centro'
+};
+
+const questionGroups = {
+  head: [
+    'Dolor de cabeza',
+    'Mareo',
+    'Visión borrosa',
+    'Fiebre',
+    'Náusea',
+    'Sensibilidad a la luz'
+  ],
+  chest: [
+    'Presión en el pecho',
+    'Ardor',
+    'Dificultad para respirar',
+    'Dolor al respirar',
+    'Palpitaciones'
+  ],
+  abdomen: [
+    'Náusea',
+    'Vómito',
+    'Diarrea',
+    'Distensión abdominal',
+    'Dolor tipo cólico',
+    'Pérdida de apetito'
+  ],
+  back: [
+    'Rigidez',
+    'Dolor al moverse',
+    'Dolor punzante',
+    'Ardor',
+    'Sensación de contractura'
+  ],
+  limb: [
+    'Hinchazón',
+    'Hormigueo',
+    'Adormecimiento',
+    'Dolor al mover',
+    'Debilidad',
+    'Enrojecimiento'
+  ]
+};
+
+function getCategoryByRegion(regionId) {
+  if (regionId.includes('head') || regionId.includes('neck')) return 'head';
+  if (regionId.includes('chest')) return 'chest';
+  if (regionId.includes('abdomen')) return 'abdomen';
+  if (regionId.includes('back') || regionId.includes('glute')) return 'back';
+  return 'limb';
+}
+
+function renderQuestions(regionId) {
+  const dynamicQuestions = document.getElementById('dynamicQuestions');
+  const category = getCategoryByRegion(regionId);
+  const questions = questionGroups[category];
+
+  let html = '<div class="option-list">';
+  questions.forEach((q, index) => {
+    const safeId = `q_${category}_${index}`;
+    html += `
+      <label class="option-item">
+        <input type="checkbox" data-question="${q}" class="dynamic-check">
+        <span>${q}</span>
+      </label>
+    `;
+  });
+  html += `
+    <label style="margin-top:10px; display:block; font-weight:600;">Otro síntoma relacionado</label>
+    <input type="text" id="other_dynamic_symptom" placeholder="Ej. sensación de presión, punzadas, ardor..." />
+  `;
+  html += '</div>';
+  dynamicQuestions.innerHTML = html;
+}
+
+function updateSymptomDetails() {
+  const checks = document.querySelectorAll('.dynamic-check:checked');
+  const selected = [];
+
+  checks.forEach(ch => {
+    selected.push(ch.dataset.question);
+  });
+
+  const other = document.getElementById('other_dynamic_symptom');
+  const details = {
+    symptoms: selected,
+    other: other ? other.value.trim() : ''
+  };
+
+  document.getElementById('symptom_details').value = JSON.stringify(details);
+}
 
 const parts = document.querySelectorAll('.body-part');
 const regionInput = document.getElementById('region_id');
+const bodyViewInput = document.getElementById('body_view');
+const bodySideInput = document.getElementById('body_side');
+
 const regionDisplay = document.getElementById('region_display');
+const bodyViewDisplay = document.getElementById('body_view_display');
+const bodySideDisplay = document.getElementById('body_side_display');
 const selectedRegionLabel = document.getElementById('selected-region-label');
+
+const frontBtn = document.getElementById('frontBtn');
+const backBtn = document.getElementById('backBtn');
+const frontView = document.getElementById('frontView');
+const backView = document.getElementById('backView');
+
+frontBtn.addEventListener('click', () => {
+  frontView.classList.remove('hidden');
+  backView.classList.add('hidden');
+  frontBtn.classList.add('active');
+  backBtn.classList.remove('active');
+});
+
+backBtn.addEventListener('click', () => {
+  backView.classList.remove('hidden');
+  frontView.classList.add('hidden');
+  backBtn.classList.add('active');
+  frontBtn.classList.remove('active');
+});
 
 parts.forEach(part => {
   part.addEventListener('click', () => {
     parts.forEach(p => p.classList.remove('active'));
     part.classList.add('active');
 
-    const id = part.id;
-    regionInput.value = id;
-    regionDisplay.value = regionMap[id];
-    selectedRegionLabel.textContent = regionMap[id];
+    const regionId = part.id;
+    const view = part.dataset.view;
+    const side = part.dataset.side;
+
+    regionInput.value = regionId;
+    bodyViewInput.value = view;
+    bodySideInput.value = side;
+
+    regionDisplay.value = regionMap[regionId];
+    bodyViewDisplay.value = viewMap[view];
+    bodySideDisplay.value = sideMap[side];
+
+    selectedRegionLabel.textContent = `${regionMap[regionId]} · Vista ${viewMap[view]} · Lado ${sideMap[side]}`;
+
+    renderQuestions(regionId);
+
+    setTimeout(() => {
+      document.querySelectorAll('.dynamic-check').forEach(el => {
+        el.addEventListener('change', updateSymptomDetails);
+      });
+      const otherField = document.getElementById('other_dynamic_symptom');
+      if (otherField) {
+        otherField.addEventListener('input', updateSymptomDetails);
+      }
+      updateSymptomDetails();
+    }, 0);
   });
+});
+
+document.getElementById('symptomForm').addEventListener('submit', () => {
+  updateSymptomDetails();
 });
 </script>
 

@@ -8,7 +8,7 @@ require_login();
 $patient_id = $_SESSION['patient_id'];
 
 $stmt = $pdo->prepare("
-    SELECT id, region_id, intensity, notes, created_at
+    SELECT id, body_view, body_side, region_id, intensity, notes, symptom_details, created_at
     FROM symptom_sessions
     WHERE patient_id = ?
     ORDER BY created_at DESC
@@ -17,14 +17,61 @@ $stmt->execute([$patient_id]);
 $rows = $stmt->fetchAll();
 
 $regionMap = [
-    'head' => 'Cabeza',
-    'chest' => 'Pecho',
-    'abdomen' => 'Abdomen',
-    'left_arm' => 'Brazo izquierdo',
-    'right_arm' => 'Brazo derecho',
-    'left_leg' => 'Pierna izquierda',
-    'right_leg' => 'Pierna derecha',
-    'back' => 'Espalda'
+    'head_front' => 'Cabeza (frontal)',
+    'shoulder_left_front' => 'Hombro izquierdo (frontal)',
+    'shoulder_right_front' => 'Hombro derecho (frontal)',
+    'chest_left' => 'Pecho izquierdo',
+    'chest_right' => 'Pecho derecho',
+    'abdomen_upper' => 'Abdomen superior',
+    'abdomen_lower' => 'Abdomen inferior',
+    'arm_left_front' => 'Brazo izquierdo (frontal)',
+    'arm_right_front' => 'Brazo derecho (frontal)',
+    'forearm_left_front' => 'Antebrazo izquierdo (frontal)',
+    'forearm_right_front' => 'Antebrazo derecho (frontal)',
+    'hand_left_front' => 'Mano izquierda (frontal)',
+    'hand_right_front' => 'Mano derecha (frontal)',
+    'thigh_left_front' => 'Muslo izquierdo (frontal)',
+    'thigh_right_front' => 'Muslo derecho (frontal)',
+    'knee_left_front' => 'Rodilla izquierda (frontal)',
+    'knee_right_front' => 'Rodilla derecha (frontal)',
+    'leg_left_front' => 'Pierna izquierda (frontal)',
+    'leg_right_front' => 'Pierna derecha (frontal)',
+    'foot_left_front' => 'Pie izquierdo (frontal)',
+    'foot_right_front' => 'Pie derecho (frontal)',
+    'head_back' => 'Cabeza (posterior)',
+    'neck_back' => 'Cuello (posterior)',
+    'shoulder_left_back' => 'Hombro izquierdo (posterior)',
+    'shoulder_right_back' => 'Hombro derecho (posterior)',
+    'upper_back' => 'Espalda alta',
+    'mid_back' => 'Espalda media',
+    'lower_back' => 'Espalda baja',
+    'arm_left_back' => 'Brazo izquierdo (posterior)',
+    'arm_right_back' => 'Brazo derecho (posterior)',
+    'forearm_left_back' => 'Antebrazo izquierdo (posterior)',
+    'forearm_right_back' => 'Antebrazo derecho (posterior)',
+    'hand_left_back' => 'Mano izquierda (posterior)',
+    'hand_right_back' => 'Mano derecha (posterior)',
+    'glute_left' => 'Glúteo izquierdo',
+    'glute_right' => 'Glúteo derecho',
+    'thigh_left_back' => 'Muslo izquierdo (posterior)',
+    'thigh_right_back' => 'Muslo derecho (posterior)',
+    'knee_left_back' => 'Rodilla izquierda (posterior)',
+    'knee_right_back' => 'Rodilla derecha (posterior)',
+    'leg_left_back' => 'Pierna izquierda (posterior)',
+    'leg_right_back' => 'Pierna derecha (posterior)',
+    'foot_left_back' => 'Pie izquierdo (posterior)',
+    'foot_right_back' => 'Pie derecho (posterior)'
+];
+
+$viewMap = [
+    'front' => 'Frontal',
+    'back' => 'Posterior'
+];
+
+$sideMap = [
+    'left' => 'Izquierdo',
+    'right' => 'Derecho',
+    'center' => 'Centro'
 ];
 ?>
 <!doctype html>
@@ -35,31 +82,28 @@ $regionMap = [
 <title>Historial - MediVisual</title>
 <style>
 :root{
-  --bg1:#3f4f2f;
-  --bg2:#556b2f;
-  --card:#1e2416;
-  --card2:#2c3a1f;
-  --text:#f1f5ec;
-  --muted:#a7b39b;
-  --line:rgba(255,255,255,.08);
-  --accent:#8fbc8f;
-  --shadow:0 20px 80px rgba(0,0,0,.45);
+  --bg1:#f4f7f2;
+  --bg2:#e9efe4;
+  --card:#ffffff;
+  --card2:#f8faf6;
+  --text:#2f3a2f;
+  --muted:#6b7c6b;
+  --line:#e2e8dc;
+  --accent:#7aa874;
+  --shadow:0 10px 30px rgba(0,0,0,.08);
   --radius:18px;
 }
 *{box-sizing:border-box}
 body{
   margin:0;
   min-height:100vh;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   color:var(--text);
-  background:
-    radial-gradient(1200px 700px at 15% 15%, rgba(85,107,47,.35), transparent 60%),
-    radial-gradient(900px 600px at 85% 20%, rgba(63,79,47,.45), transparent 55%),
-    linear-gradient(180deg, #1a2113, #10150c);
+  background:linear-gradient(180deg, #f4f7f2, #e9efe4);
   padding:24px;
 }
 .container{
-  width:min(1000px, 100%);
+  width:min(1200px,100%);
   margin:auto;
 }
 .card{
@@ -69,66 +113,118 @@ body{
   background:linear-gradient(180deg,var(--card2),var(--card));
   box-shadow:var(--shadow);
 }
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:16px;
-}
-th, td{
-  padding:12px;
-  border-bottom:1px solid var(--line);
-  text-align:left;
+.actions{
+  margin-bottom:18px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
 }
 a.btn{
   display:inline-block;
-  margin-right:10px;
   padding:10px 14px;
   border-radius:12px;
   text-decoration:none;
   color:white;
-  background:linear-gradient(135deg,#6b8e23,#556b2f);
+  background:linear-gradient(135deg,#7aa874,#5f8f63);
+  font-weight:600;
 }
-a.link{
-  color:var(--accent);
-  text-decoration:none;
+.record{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+  padding:16px;
+  margin-bottom:14px;
+}
+.meta{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+  gap:10px;
+  margin-bottom:10px;
+}
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  background:#eef5ea;
+  color:#4f6c4f;
+  font-size:.85rem;
+  font-weight:600;
+}
+ul{
+  margin:8px 0 0 18px;
+}
+.empty{
+  padding:16px;
+  border:1px dashed var(--line);
+  border-radius:12px;
+  background:#fcfdfb;
+  color:var(--muted);
 }
 </style>
 </head>
 <body>
+
 <div class="container">
   <div class="card">
     <h1>Historial de síntomas</h1>
 
-    <p>
+    <div class="actions">
       <a class="btn" href="index.php">Volver</a>
       <a class="btn" href="delete_history.php" onclick="return confirm('¿Seguro que deseas eliminar todo tu historial?')">Eliminar historial</a>
-    </p>
+    </div>
 
     <?php if (!$rows): ?>
-      <p>No tienes registros todavía.</p>
+      <div class="empty">No tienes registros todavía.</div>
     <?php else: ?>
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Región</th>
-            <th>Intensidad</th>
-            <th>Notas</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($rows as $r): ?>
-            <tr>
-              <td><?= htmlspecialchars($r['created_at']) ?></td>
-              <td><?= htmlspecialchars($regionMap[$r['region_id']] ?? $r['region_id']) ?></td>
-              <td><?= htmlspecialchars((string)$r['intensity']) ?>/10</td>
-              <td><?= htmlspecialchars($r['notes'] ?? '') ?></td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+      <?php foreach ($rows as $r): ?>
+        <div class="record">
+          <div class="meta">
+            <div><strong>Fecha:</strong><br><?= htmlspecialchars($r['created_at']) ?></div>
+            <div><strong>Vista:</strong><br><span class="badge"><?= htmlspecialchars($viewMap[$r['body_view']] ?? $r['body_view']) ?></span></div>
+            <div><strong>Lado:</strong><br><span class="badge"><?= htmlspecialchars($sideMap[$r['body_side']] ?? $r['body_side']) ?></span></div>
+            <div><strong>Región:</strong><br><?= htmlspecialchars($regionMap[$r['region_id']] ?? $r['region_id']) ?></div>
+            <div><strong>Intensidad:</strong><br><?= htmlspecialchars((string)$r['intensity']) ?>/10</div>
+          </div>
+
+          <div>
+            <strong>Notas:</strong><br>
+            <?= nl2br(htmlspecialchars($r['notes'] ?? 'Sin notas')) ?>
+          </div>
+
+          <?php
+          $details = [];
+          if (!empty($r['symptom_details'])) {
+              $decoded = json_decode($r['symptom_details'], true);
+              if (is_array($decoded)) {
+                  $details = $decoded;
+              }
+          }
+          ?>
+
+          <?php if (!empty($details)): ?>
+            <div style="margin-top:12px;">
+              <strong>Preguntas relacionadas:</strong>
+              <?php if (!empty($details['symptoms']) && is_array($details['symptoms'])): ?>
+                <ul>
+                  <?php foreach ($details['symptoms'] as $sym): ?>
+                    <li><?= htmlspecialchars($sym) ?></li>
+                  <?php endforeach; ?>
+                </ul>
+              <?php endif; ?>
+
+              <?php if (!empty($details['other'])): ?>
+                <div style="margin-top:6px;">
+                  <strong>Otro síntoma:</strong>
+                  <?= htmlspecialchars($details['other']) ?>
+                </div>
+              <?php endif; ?>
+            </div>
+          <?php endif; ?>
+        </div>
+      <?php endforeach; ?>
     <?php endif; ?>
   </div>
 </div>
+
 </body>
 </html>
