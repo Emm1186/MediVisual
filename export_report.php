@@ -95,8 +95,16 @@ if (!empty($record['symptom_details'])) {
 }
 
 $alertClass = 'none';
-if (($record['alert_level'] ?? '') === 'alta') $alertClass = 'high';
-if (($record['alert_level'] ?? '') === 'media') $alertClass = 'medium';
+$alertTitle = 'Sin alerta inmediata';
+if (($record['alert_level'] ?? '') === 'alta') {
+    $alertClass = 'high';
+    $alertTitle = 'Alerta alta';
+} elseif (($record['alert_level'] ?? '') === 'media') {
+    $alertClass = 'medium';
+    $alertTitle = 'Alerta media';
+}
+
+$today = date('d/m/Y H:i');
 ?>
 <!doctype html>
 <html lang="es">
@@ -112,6 +120,7 @@ if (($record['alert_level'] ?? '') === 'media') $alertClass = 'medium';
   --muted:#6b7c6b;
   --line:#dfe7d8;
   --accent:#7aa874;
+  --accent-dark:#5f8f63;
   --shadow:0 8px 24px rgba(0,0,0,.08);
   --radius:16px;
 }
@@ -124,7 +133,7 @@ body{
   padding:24px;
 }
 .container{
-  max-width:900px;
+  max-width:950px;
   margin:auto;
 }
 .toolbar{
@@ -145,48 +154,91 @@ body{
   cursor:pointer;
 }
 .btn.primary{
-  background:linear-gradient(135deg,#7aa874,#5f8f63);
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));
   color:#fff;
 }
-.card{
+.sheet{
   background:var(--card);
   border:1px solid var(--line);
-  border-radius:var(--radius);
+  border-radius:20px;
   box-shadow:var(--shadow);
-  padding:24px;
+  overflow:hidden;
 }
-.header{
+.sheet-header{
+  background:linear-gradient(135deg,#edf5e8,#f8fbf6);
+  border-bottom:1px solid var(--line);
+  padding:26px 28px;
+}
+.header-top{
   display:flex;
   justify-content:space-between;
   align-items:flex-start;
-  gap:16px;
+  gap:20px;
   flex-wrap:wrap;
-  margin-bottom:20px;
 }
-h1,h2,h3{
-  margin:0 0 10px;
+.brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
 }
-.meta{
+.logo{
+  width:54px;
+  height:54px;
+  border-radius:16px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:800;
+  font-size:1rem;
+}
+.brand h1{
+  margin:0;
+  font-size:1.6rem;
+}
+.brand p{
+  margin:4px 0 0;
+  color:var(--muted);
+}
+.header-meta{
+  text-align:right;
+  color:var(--muted);
+  font-size:.95rem;
+}
+.sheet-body{
+  padding:26px 28px;
+}
+.section{
+  margin-bottom:22px;
+}
+.section h2{
+  margin:0 0 12px;
+  font-size:1.08rem;
+  color:#304430;
+}
+.grid{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
   gap:12px;
-  margin-bottom:18px;
 }
-.meta-item{
+.info-box{
   border:1px solid var(--line);
-  border-radius:12px;
-  padding:12px;
-  background:#fbfdf9;
+  border-radius:14px;
+  background:#fcfdfb;
+  padding:14px;
 }
 .label{
-  font-size:.85rem;
+  font-size:.84rem;
   color:var(--muted);
-  margin-bottom:4px;
+  margin-bottom:6px;
+}
+.value{
+  font-weight:600;
 }
 .alert-box{
-  margin:18px 0;
   padding:16px;
-  border-radius:14px;
+  border-radius:16px;
   border:1px solid var(--line);
 }
 .alert-box.high{
@@ -201,21 +253,33 @@ h1,h2,h3{
   background:#e7f3e5;
   border-color:#cfe2cb;
 }
-.section{
-  margin-top:18px;
+.alert-box h3{
+  margin:0 0 8px;
+  font-size:1.05rem;
 }
-.section-box{
+.panel{
   border:1px solid var(--line);
-  border-radius:12px;
-  padding:14px;
+  border-radius:14px;
+  padding:16px;
   background:#fcfdfb;
+}
+.panel p{
+  margin:0;
+  line-height:1.65;
 }
 ul{
   margin:8px 0 0 18px;
 }
 .summary{
   white-space:pre-wrap;
-  line-height:1.6;
+  line-height:1.7;
+}
+.footer-note{
+  margin-top:28px;
+  padding-top:16px;
+  border-top:1px dashed var(--line);
+  color:var(--muted);
+  font-size:.9rem;
 }
 @media print{
   body{
@@ -225,10 +289,13 @@ ul{
   .toolbar{
     display:none;
   }
-  .card{
-    box-shadow:none;
+  .sheet{
     border:none;
-    padding:0;
+    box-shadow:none;
+    border-radius:0;
+  }
+  .sheet-header{
+    background:#fff;
   }
 }
 </style>
@@ -241,76 +308,108 @@ ul{
     <button class="btn primary" onclick="window.print()">Imprimir / Guardar PDF</button>
   </div>
 
-  <div class="card">
-    <div class="header">
-      <div>
-        <h1>Reporte clínico automático</h1>
-        <div style="color:#6b7c6b;">MediVisual · Registro de síntomas</div>
-      </div>
-      <div style="text-align:right;">
-        <div><strong>Paciente:</strong> <?= htmlspecialchars($patient_name) ?></div>
-        <div><strong>Fecha:</strong> <?= htmlspecialchars($record['created_at']) ?></div>
-        <div><strong>ID de registro:</strong> #<?= htmlspecialchars((string)$record['id']) ?></div>
-      </div>
-    </div>
-
-    <div class="meta">
-      <div class="meta-item">
-        <div class="label">Vista corporal</div>
-        <div><?= htmlspecialchars($viewMap[$record['body_view']] ?? $record['body_view']) ?></div>
-      </div>
-      <div class="meta-item">
-        <div class="label">Lado del cuerpo</div>
-        <div><?= htmlspecialchars($sideMap[$record['body_side']] ?? $record['body_side']) ?></div>
-      </div>
-      <div class="meta-item">
-        <div class="label">Región</div>
-        <div><?= htmlspecialchars($regionMap[$record['region_id']] ?? $record['region_id']) ?></div>
-      </div>
-      <div class="meta-item">
-        <div class="label">Intensidad</div>
-        <div><?= htmlspecialchars((string)$record['intensity']) ?>/10</div>
-      </div>
-    </div>
-
-    <div class="alert-box <?= $alertClass ?>">
-      <h3>Nivel de alerta: <?= htmlspecialchars(strtoupper((string)($record['alert_level'] ?? 'sin alerta'))) ?></h3>
-      <div><?= htmlspecialchars($record['alert_message'] ?? 'Sin mensaje automático.') ?></div>
-    </div>
-
-    <div class="section">
-      <h2>Notas del paciente</h2>
-      <div class="section-box">
-        <?= nl2br(htmlspecialchars($record['notes'] ?: 'Sin notas registradas.')) ?>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Respuestas relacionadas</h2>
-      <div class="section-box">
-        <?php if (!empty($details['symptoms']) && is_array($details['symptoms'])): ?>
-          <strong>Síntomas asociados:</strong>
-          <ul>
-            <?php foreach ($details['symptoms'] as $sym): ?>
-              <li><?= htmlspecialchars($sym) ?></li>
-            <?php endforeach; ?>
-          </ul>
-        <?php else: ?>
-          <div>No se registraron síntomas asociados específicos.</div>
-        <?php endif; ?>
-
-        <?php if (!empty($details['other'])): ?>
-          <div style="margin-top:10px;">
-            <strong>Otro síntoma referido:</strong>
-            <?= htmlspecialchars($details['other']) ?>
+  <div class="sheet">
+    <div class="sheet-header">
+      <div class="header-top">
+        <div class="brand">
+          <div class="logo">MV</div>
+          <div>
+            <h1>Reporte clínico automático</h1>
+            <p>MediVisual · Sistema de registro y apoyo inicial de síntomas</p>
           </div>
-        <?php endif; ?>
+        </div>
+
+        <div class="header-meta">
+          <div><strong>Generado:</strong> <?= htmlspecialchars($today) ?></div>
+          <div><strong>ID de registro:</strong> #<?= htmlspecialchars((string)$record['id']) ?></div>
+        </div>
       </div>
     </div>
 
-    <div class="section">
-      <h2>Resumen clínico automático</h2>
-      <div class="section-box summary"><?= htmlspecialchars($record['clinical_summary'] ?? 'Sin resumen generado.') ?></div>
+    <div class="sheet-body">
+      <div class="section">
+        <h2>Identificación del paciente</h2>
+        <div class="grid">
+          <div class="info-box">
+            <div class="label">Paciente</div>
+            <div class="value"><?= htmlspecialchars($patient_name) ?></div>
+          </div>
+          <div class="info-box">
+            <div class="label">Fecha del registro</div>
+            <div class="value"><?= htmlspecialchars($record['created_at']) ?></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Datos generales del síntoma</h2>
+        <div class="grid">
+          <div class="info-box">
+            <div class="label">Vista corporal</div>
+            <div class="value"><?= htmlspecialchars($viewMap[$record['body_view']] ?? $record['body_view']) ?></div>
+          </div>
+          <div class="info-box">
+            <div class="label">Lado del cuerpo</div>
+            <div class="value"><?= htmlspecialchars($sideMap[$record['body_side']] ?? $record['body_side']) ?></div>
+          </div>
+          <div class="info-box">
+            <div class="label">Región anatómica</div>
+            <div class="value"><?= htmlspecialchars($regionMap[$record['region_id']] ?? $record['region_id']) ?></div>
+          </div>
+          <div class="info-box">
+            <div class="label">Intensidad</div>
+            <div class="value"><?= htmlspecialchars((string)$record['intensity']) ?>/10</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Evaluación automática de alerta</h2>
+        <div class="alert-box <?= $alertClass ?>">
+          <h3><?= htmlspecialchars($alertTitle) ?></h3>
+          <div><?= htmlspecialchars($record['alert_message'] ?? 'Sin mensaje automático.') ?></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Notas del paciente</h2>
+        <div class="panel">
+          <p><?= nl2br(htmlspecialchars($record['notes'] ?: 'Sin notas registradas.')) ?></p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Respuestas relacionadas</h2>
+        <div class="panel">
+          <?php if (!empty($details['symptoms']) && is_array($details['symptoms'])): ?>
+            <strong>Síntomas asociados:</strong>
+            <ul>
+              <?php foreach ($details['symptoms'] as $sym): ?>
+                <li><?= htmlspecialchars($sym) ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php else: ?>
+            <p>No se registraron síntomas asociados específicos.</p>
+          <?php endif; ?>
+
+          <?php if (!empty($details['other'])): ?>
+            <div style="margin-top:10px;">
+              <strong>Otro síntoma referido:</strong>
+              <?= htmlspecialchars($details['other']) ?>
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Resumen clínico automático</h2>
+        <div class="panel summary"><?= htmlspecialchars($record['clinical_summary'] ?? 'Sin resumen generado.') ?></div>
+      </div>
+
+      <div class="footer-note">
+        Este documento es un reporte automatizado generado por MediVisual como apoyo a la comunicación inicial médico-paciente.
+        No sustituye una valoración clínica profesional.
+      </div>
     </div>
   </div>
 </div>

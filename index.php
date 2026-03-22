@@ -21,6 +21,94 @@ unset(
     $_SESSION['last_alert_message'],
     $_SESSION['last_clinical_summary']
 );
+
+$patient_id = (int)$_SESSION['patient_id'];
+
+/* ===========================
+   DASHBOARD STATS
+=========================== */
+
+// total registros + promedio intensidad
+$stmt = $pdo->prepare("
+    SELECT COUNT(*) AS total_records,
+           AVG(intensity) AS avg_intensity
+    FROM symptom_sessions
+    WHERE patient_id = ?
+");
+$stmt->execute([$patient_id]);
+$stats = $stmt->fetch() ?: [
+    'total_records' => 0,
+    'avg_intensity' => null
+];
+
+// último registro
+$stmt = $pdo->prepare("
+    SELECT region_id, alert_level, created_at
+    FROM symptom_sessions
+    WHERE patient_id = ?
+    ORDER BY created_at DESC
+    LIMIT 1
+");
+$stmt->execute([$patient_id]);
+$lastRecord = $stmt->fetch();
+
+// última alerta relevante
+$stmt = $pdo->prepare("
+    SELECT alert_level, alert_message, created_at
+    FROM symptom_sessions
+    WHERE patient_id = ? AND alert_level <> 'sin alerta'
+    ORDER BY created_at DESC
+    LIMIT 1
+");
+$stmt->execute([$patient_id]);
+$lastAlertRecord = $stmt->fetch();
+
+$regionMap = [
+    'head_front' => 'Cabeza (frontal)',
+    'shoulder_left_front' => 'Hombro izquierdo (frontal)',
+    'shoulder_right_front' => 'Hombro derecho (frontal)',
+    'chest_left' => 'Pecho izquierdo',
+    'chest_right' => 'Pecho derecho',
+    'abdomen_upper' => 'Abdomen superior',
+    'abdomen_lower' => 'Abdomen inferior',
+    'arm_left_front' => 'Brazo izquierdo (frontal)',
+    'arm_right_front' => 'Brazo derecho (frontal)',
+    'forearm_left_front' => 'Antebrazo izquierdo (frontal)',
+    'forearm_right_front' => 'Antebrazo derecho (frontal)',
+    'hand_left_front' => 'Mano izquierda (frontal)',
+    'hand_right_front' => 'Mano derecha (frontal)',
+    'thigh_left_front' => 'Muslo izquierdo (frontal)',
+    'thigh_right_front' => 'Muslo derecho (frontal)',
+    'knee_left_front' => 'Rodilla izquierda (frontal)',
+    'knee_right_front' => 'Rodilla derecha (frontal)',
+    'leg_left_front' => 'Pierna izquierda (frontal)',
+    'leg_right_front' => 'Pierna derecha (frontal)',
+    'foot_left_front' => 'Pie izquierdo (frontal)',
+    'foot_right_front' => 'Pie derecho (frontal)',
+    'head_back' => 'Cabeza (posterior)',
+    'neck_back' => 'Cuello (posterior)',
+    'shoulder_left_back' => 'Hombro izquierdo (posterior)',
+    'shoulder_right_back' => 'Hombro derecho (posterior)',
+    'upper_back' => 'Espalda alta',
+    'mid_back' => 'Espalda media',
+    'lower_back' => 'Espalda baja',
+    'arm_left_back' => 'Brazo izquierdo (posterior)',
+    'arm_right_back' => 'Brazo derecho (posterior)',
+    'forearm_left_back' => 'Antebrazo izquierdo (posterior)',
+    'forearm_right_back' => 'Antebrazo derecho (posterior)',
+    'hand_left_back' => 'Mano izquierda (posterior)',
+    'hand_right_back' => 'Mano derecha (posterior)',
+    'glute_left' => 'Glúteo izquierdo',
+    'glute_right' => 'Glúteo derecho',
+    'thigh_left_back' => 'Muslo izquierdo (posterior)',
+    'thigh_right_back' => 'Muslo derecho (posterior)',
+    'knee_left_back' => 'Rodilla izquierda (posterior)',
+    'knee_right_back' => 'Rodilla derecha (posterior)',
+    'leg_left_back' => 'Pierna izquierda (posterior)',
+    'leg_right_back' => 'Pierna derecha (posterior)',
+    'foot_left_back' => 'Pie izquierdo (posterior)',
+    'foot_right_back' => 'Pie derecho (posterior)'
+];
 ?>
 <!doctype html>
 <html lang="es">
@@ -84,6 +172,34 @@ body{
   background:#ffffff;
   color:var(--text);
   border:1px solid var(--line);
+}
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+  gap:16px;
+  margin-bottom:24px;
+}
+.stat-card{
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:18px;
+  background:linear-gradient(180deg,var(--card2),var(--card));
+  box-shadow:var(--shadow);
+}
+.stat-label{
+  font-size:.9rem;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+.stat-value{
+  font-size:1.4rem;
+  font-weight:800;
+  color:#365236;
+}
+.stat-sub{
+  margin-top:6px;
+  font-size:.9rem;
+  color:var(--muted);
 }
 .grid{
   display:grid;
@@ -308,6 +424,42 @@ textarea{
     <div class="actions">
       <a class="btn-link" href="history.php">Ver historial</a>
       <a class="btn-link" href="logout.php">Cerrar sesión</a>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total de registros</div>
+      <div class="stat-value"><?= htmlspecialchars((string)($stats['total_records'] ?? 0)) ?></div>
+      <div class="stat-sub">Entradas guardadas por el paciente</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Intensidad promedio</div>
+      <div class="stat-value">
+        <?= $stats['avg_intensity'] !== null ? number_format((float)$stats['avg_intensity'], 1) . '/10' : '—' ?>
+      </div>
+      <div class="stat-sub">Promedio de dolor registrado</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Última zona registrada</div>
+      <div class="stat-value" style="font-size:1.05rem;">
+        <?= $lastRecord ? htmlspecialchars($regionMap[$lastRecord['region_id']] ?? $lastRecord['region_id']) : 'Sin registros' ?>
+      </div>
+      <div class="stat-sub">
+        <?= $lastRecord ? htmlspecialchars($lastRecord['created_at']) : 'Aún no hay actividad' ?>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Última alerta detectada</div>
+      <div class="stat-value" style="font-size:1.05rem;">
+        <?= $lastAlertRecord ? htmlspecialchars(strtoupper((string)$lastAlertRecord['alert_level'])) : 'SIN ALERTAS' ?>
+      </div>
+      <div class="stat-sub">
+        <?= $lastAlertRecord ? htmlspecialchars($lastAlertRecord['created_at']) : 'No se han detectado alertas' ?>
+      </div>
     </div>
   </div>
 
@@ -561,7 +713,7 @@ function renderQuestions(regionId) {
   const questions = questionGroups[category];
 
   let html = '<div class="option-list">';
-  questions.forEach((q, index) => {
+  questions.forEach((q) => {
     html += `
       <label class="option-item">
         <input type="checkbox" data-question="${q}" class="dynamic-check">

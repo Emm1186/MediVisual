@@ -285,6 +285,7 @@ ul{
           </div>
 
           <div class="record-actions">
+            <a class="small-btn" href="edit_record.php?id=<?= urlencode((string)$r['id']) ?>">Editar</a>
             <a class="small-btn primary" href="export_report.php?id=<?= urlencode((string)$r['id']) ?>">Exportar reporte</a>
           </div>
         </div>

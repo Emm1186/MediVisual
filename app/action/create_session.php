@@ -164,9 +164,9 @@ $sideMap = [
     'center' => 'Centro'
 ];
 
-/* ALERTAS */
-$alert_level = 'sin alerta';
-$alert_message = 'No se detectaron señales de alarma básicas.';
+/* ===========================
+   NORMALIZACIÓN DE SÍNTOMAS
+=========================== */
 
 $symptoms = $decoded_details['symptoms'] ?? [];
 $otherSymptom = trim((string)($decoded_details['other'] ?? ''));
@@ -177,32 +177,61 @@ $isChest = str_contains($region_id, 'chest');
 $isHead = str_contains($region_id, 'head') || str_contains($region_id, 'neck');
 $isAbdomen = str_contains($region_id, 'abdomen');
 $isBack = str_contains($region_id, 'back') || str_contains($region_id, 'glute');
+$isLimb = !$isChest && !$isHead && !$isAbdomen && !$isBack;
 
 $hasBreathingIssue = str_contains($allSymptomText, 'dificultad para respirar') || str_contains($allSymptomText, 'dolor al respirar');
 $hasVisionIssue = str_contains($allSymptomText, 'visión borrosa');
 $hasDizziness = str_contains($allSymptomText, 'mareo');
+$hasFever = str_contains($allSymptomText, 'fiebre');
+$hasNausea = str_contains($allSymptomText, 'náusea');
 $hasVomiting = str_contains($allSymptomText, 'vómito');
 $hasDiarrhea = str_contains($allSymptomText, 'diarrea');
 $hasPalpitations = str_contains($allSymptomText, 'palpitaciones');
+$hasSwelling = str_contains($allSymptomText, 'hinchazón');
+$hasRedness = str_contains($allSymptomText, 'enrojecimiento');
+$hasNumbness = str_contains($allSymptomText, 'adormecimiento');
+$hasWeakness = str_contains($allSymptomText, 'debilidad');
 
-if ($isChest && ($intensity >= 8 || $hasBreathingIssue || $hasPalpitations)) {
+/* ===========================
+   REGLAS DE ALERTA MEJORADAS
+=========================== */
+
+$alert_level = 'sin alerta';
+$alert_message = 'No se detectaron señales de alarma básicas con la información capturada.';
+
+if ($isChest && ($hasBreathingIssue || $hasPalpitations || $intensity >= 8)) {
     $alert_level = 'alta';
-    $alert_message = 'Dolor torácico con posible signo de alarma. Se recomienda valoración médica inmediata.';
-} elseif ($isHead && ($hasVisionIssue || $hasDizziness) && $intensity >= 7) {
+    $alert_message = 'Dolor en tórax con datos potencialmente relevantes. Se recomienda valoración médica inmediata.';
+}
+elseif ($isHead && (($hasVisionIssue && $intensity >= 7) || ($hasDizziness && $intensity >= 7) || ($hasFever && $hasNausea))) {
     $alert_level = 'alta';
-    $alert_message = 'Síntoma neurológico potencial con intensidad elevada. Se recomienda atención médica pronta.';
-} elseif ($isAbdomen && ($hasVomiting || $hasDiarrhea) && $intensity >= 7) {
+    $alert_message = 'Síntomas en cabeza o cuello con posible señal de alarma. Se recomienda atención médica pronta.';
+}
+elseif ($isAbdomen && (($hasVomiting && $intensity >= 8) || ($hasDiarrhea && $intensity >= 8))) {
+    $alert_level = 'alta';
+    $alert_message = 'Dolor abdominal intenso con síntomas digestivos asociados. Se recomienda valoración médica pronta.';
+}
+elseif ($isAbdomen && (($hasVomiting || $hasDiarrhea) && $intensity >= 6)) {
     $alert_level = 'media';
-    $alert_message = 'Dolor abdominal con síntomas asociados relevantes. Se recomienda valoración médica.';
-} elseif ($isBack && $intensity >= 8) {
+    $alert_message = 'Dolor abdominal con síntomas asociados relevantes. Se recomienda seguimiento clínico.';
+}
+elseif ($isBack && $intensity >= 8) {
     $alert_level = 'media';
-    $alert_message = 'Dolor intenso en espalda o zona posterior. Se recomienda revisión clínica.';
-} elseif ($intensity >= 9) {
+    $alert_message = 'Dolor intenso en espalda o zona posterior. Se recomienda revisión médica.';
+}
+elseif ($isLimb && (($hasSwelling && $hasRedness) || ($hasNumbness && $hasWeakness))) {
     $alert_level = 'media';
-    $alert_message = 'Dolor de alta intensidad. Se recomienda valoración médica.';
+    $alert_message = 'Síntomas en extremidad con datos de inflamación o alteración funcional. Se recomienda valoración clínica.';
+}
+elseif ($intensity >= 9) {
+    $alert_level = 'media';
+    $alert_message = 'Dolor de muy alta intensidad. Se recomienda atención médica para valoración.';
 }
 
-/* RESUMEN */
+/* ===========================
+   RESUMEN CLÍNICO
+=========================== */
+
 $summaryParts = [];
 $summaryParts[] = "Zona afectada: " . ($regionMap[$region_id] ?? $region_id);
 $summaryParts[] = "Vista corporal: " . ($viewMap[$body_view] ?? $body_view);
@@ -223,7 +252,10 @@ $summaryParts[] = "Observación automática: " . $alert_message;
 
 $clinical_summary = implode(". ", $summaryParts) . ".";
 
-/* GUARDAR */
+/* ===========================
+   GUARDAR
+=========================== */
+
 $stmt = $pdo->prepare("
     INSERT INTO symptom_sessions (
         patient_id,
@@ -253,7 +285,6 @@ $stmt->execute([
     $clinical_summary
 ]);
 
-/* MOSTRAR ALERTA INMEDIATA EN INDEX */
 $_SESSION['form_success'] = "Síntoma registrado correctamente.";
 $_SESSION['last_alert_level'] = $alert_level;
 $_SESSION['last_alert_message'] = $alert_message;
