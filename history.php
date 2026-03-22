@@ -8,7 +8,8 @@ require_login();
 $patient_id = $_SESSION['patient_id'];
 
 $stmt = $pdo->prepare("
-    SELECT id, body_view, body_side, region_id, intensity, notes, symptom_details, created_at
+    SELECT id, body_view, body_side, region_id, intensity, notes, symptom_details,
+           alert_level, alert_message, clinical_summary, created_at
     FROM symptom_sessions
     WHERE patient_id = ?
     ORDER BY created_at DESC
@@ -150,6 +151,18 @@ a.btn{
   font-size:.85rem;
   font-weight:600;
 }
+.badge.alert-high{
+  background:#fde2de;
+  color:#9a3f31;
+}
+.badge.alert-medium{
+  background:#fff0d8;
+  color:#9a6b1e;
+}
+.badge.alert-none{
+  background:#e7f3e5;
+  color:#476241;
+}
 ul{
   margin:8px 0 0 18px;
 }
@@ -159,6 +172,34 @@ ul{
   border-radius:12px;
   background:#fcfdfb;
   color:var(--muted);
+}
+.summary{
+  margin-top:12px;
+  padding:12px;
+  border-radius:12px;
+  background:#f8fbf6;
+  border:1px solid var(--line);
+  white-space:pre-wrap;
+}
+.record-actions{
+  margin-top:14px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.small-btn{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:10px;
+  text-decoration:none;
+  background:#ffffff;
+  border:1px solid var(--line);
+  color:var(--text);
+  font-weight:600;
+}
+.small-btn.primary{
+  background:linear-gradient(135deg,#7aa874,#5f8f63);
+  color:#fff;
 }
 </style>
 </head>
@@ -220,6 +261,32 @@ ul{
               <?php endif; ?>
             </div>
           <?php endif; ?>
+
+          <div style="margin-top:12px;">
+            <strong>Nivel de alerta:</strong><br>
+            <?php
+              $alertClass = 'alert-none';
+              if (($r['alert_level'] ?? '') === 'alta') $alertClass = 'alert-high';
+              if (($r['alert_level'] ?? '') === 'media') $alertClass = 'alert-medium';
+            ?>
+            <span class="badge <?= $alertClass ?>">
+              <?= htmlspecialchars(strtoupper((string)($r['alert_level'] ?? 'sin alerta'))) ?>
+            </span>
+          </div>
+
+          <div style="margin-top:8px;">
+            <strong>Mensaje automático:</strong><br>
+            <?= htmlspecialchars($r['alert_message'] ?? 'Sin mensaje') ?>
+          </div>
+
+          <div class="summary">
+            <strong>Resumen clínico automático:</strong><br><br>
+            <?= htmlspecialchars($r['clinical_summary'] ?? 'Sin resumen') ?>
+          </div>
+
+          <div class="record-actions">
+            <a class="small-btn primary" href="export_report.php?id=<?= urlencode((string)$r['id']) ?>">Exportar reporte</a>
+          </div>
         </div>
       <?php endforeach; ?>
     <?php endif; ?>

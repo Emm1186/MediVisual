@@ -10,7 +10,17 @@ $name = $_SESSION['patient_name'] ?? 'Paciente';
 $errors = $_SESSION['form_errors'] ?? [];
 $success = $_SESSION['form_success'] ?? null;
 
-unset($_SESSION['form_errors'], $_SESSION['form_success']);
+$lastAlertLevel = $_SESSION['last_alert_level'] ?? null;
+$lastAlertMessage = $_SESSION['last_alert_message'] ?? null;
+$lastClinicalSummary = $_SESSION['last_clinical_summary'] ?? null;
+
+unset(
+    $_SESSION['form_errors'],
+    $_SESSION['form_success'],
+    $_SESSION['last_alert_level'],
+    $_SESSION['last_alert_message'],
+    $_SESSION['last_clinical_summary']
+);
 ?>
 <!doctype html>
 <html lang="es">
@@ -105,6 +115,37 @@ body{
 .alert.success{
   background:#e3f0df;
   color:#476241;
+}
+.alert-box{
+  margin-bottom:20px;
+  border-radius:16px;
+  padding:18px;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.alert-box.high{
+  background:#fde2de;
+  border-color:#f1c1b8;
+}
+.alert-box.medium{
+  background:#fff0d8;
+  border-color:#f0ddb4;
+}
+.alert-box.none{
+  background:#e7f3e5;
+  border-color:#cfe2cb;
+}
+.alert-title{
+  font-weight:800;
+  margin:0 0 8px;
+  font-size:1.05rem;
+}
+.alert-summary{
+  margin-top:10px;
+  padding:12px;
+  border-radius:12px;
+  background:rgba(255,255,255,.6);
+  white-space:pre-wrap;
 }
 .toolbar{
   display:flex;
@@ -269,6 +310,34 @@ textarea{
       <a class="btn-link" href="logout.php">Cerrar sesión</a>
     </div>
   </div>
+
+  <?php if ($lastAlertLevel !== null && $lastAlertMessage !== null): ?>
+    <?php
+      $alertClass = 'none';
+      $alertTitle = 'Sin alerta';
+      if ($lastAlertLevel === 'alta') {
+          $alertClass = 'high';
+          $alertTitle = '⚠️ Alerta alta';
+      } elseif ($lastAlertLevel === 'media') {
+          $alertClass = 'medium';
+          $alertTitle = '⚠️ Alerta media';
+      } else {
+          $alertClass = 'none';
+          $alertTitle = '✅ Sin alerta inmediata';
+      }
+    ?>
+    <div class="alert-box <?= $alertClass ?>">
+      <div class="alert-title"><?= $alertTitle ?></div>
+      <div><?= htmlspecialchars($lastAlertMessage) ?></div>
+
+      <?php if ($lastClinicalSummary): ?>
+        <div class="alert-summary">
+          <strong>Resumen clínico automático:</strong><br><br>
+          <?= htmlspecialchars($lastClinicalSummary) ?>
+        </div>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
 
   <div class="grid">
     <div class="card">
@@ -471,44 +540,11 @@ const sideMap = {
 };
 
 const questionGroups = {
-  head: [
-    'Dolor de cabeza',
-    'Mareo',
-    'Visión borrosa',
-    'Fiebre',
-    'Náusea',
-    'Sensibilidad a la luz'
-  ],
-  chest: [
-    'Presión en el pecho',
-    'Ardor',
-    'Dificultad para respirar',
-    'Dolor al respirar',
-    'Palpitaciones'
-  ],
-  abdomen: [
-    'Náusea',
-    'Vómito',
-    'Diarrea',
-    'Distensión abdominal',
-    'Dolor tipo cólico',
-    'Pérdida de apetito'
-  ],
-  back: [
-    'Rigidez',
-    'Dolor al moverse',
-    'Dolor punzante',
-    'Ardor',
-    'Sensación de contractura'
-  ],
-  limb: [
-    'Hinchazón',
-    'Hormigueo',
-    'Adormecimiento',
-    'Dolor al mover',
-    'Debilidad',
-    'Enrojecimiento'
-  ]
+  head: ['Dolor de cabeza', 'Mareo', 'Visión borrosa', 'Fiebre', 'Náusea', 'Sensibilidad a la luz'],
+  chest: ['Presión en el pecho', 'Ardor', 'Dificultad para respirar', 'Dolor al respirar', 'Palpitaciones'],
+  abdomen: ['Náusea', 'Vómito', 'Diarrea', 'Distensión abdominal', 'Dolor tipo cólico', 'Pérdida de apetito'],
+  back: ['Rigidez', 'Dolor al moverse', 'Dolor punzante', 'Ardor', 'Sensación de contractura'],
+  limb: ['Hinchazón', 'Hormigueo', 'Adormecimiento', 'Dolor al mover', 'Debilidad', 'Enrojecimiento']
 };
 
 function getCategoryByRegion(regionId) {
@@ -526,7 +562,6 @@ function renderQuestions(regionId) {
 
   let html = '<div class="option-list">';
   questions.forEach((q, index) => {
-    const safeId = `q_${category}_${index}`;
     html += `
       <label class="option-item">
         <input type="checkbox" data-question="${q}" class="dynamic-check">
